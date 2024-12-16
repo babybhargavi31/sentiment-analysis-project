@@ -2,7 +2,8 @@ import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-
+from textblob import TextBlob
+import nltk
 
 # Preprocess text
 def preprocess(text):
@@ -12,31 +13,22 @@ def preprocess(text):
     return text
 
 
-# Sentiment word lists
-positive_words = {"love", "great", "fantastic", "amazing", "happy", "good", "awesome", "enjoy"}
-negative_words = {"hate", "worst", "bad", "terrible", "disappointing", "awful", "horrible", "worried"}
-
-
-# Define a simple scoring function
+# Analyze sentiment with TextBlob
 def analyze_sentiment(review):
     """
-    Analyze sentiment by counting occurrences of positive and negative words.
-    Returns 'Positive', 'Negative', or 'Neutral' based on word counts.
+    Analyze sentiment using TextBlob.
+    TextBlob returns a polarity value between -1 and 1.
+    - Polarity < 0 indicates Negative sentiment.
+    - Polarity = 0 indicates Neutral sentiment.
+    - Polarity > 0 indicates Positive sentiment.
     """
-    # Preprocess the review text
-    review = preprocess(review)
+    review = preprocess(review)  # Preprocess the review text
+    blob = TextBlob(review)
     
-    # Tokenize and split text into words
-    words = review.split()
-    
-    # Count positive and negative words
-    pos_count = sum(1 for word in words if word in positive_words)
-    neg_count = sum(1 for word in words if word in negative_words)
-    
-    # Assign sentiment based on word counts
-    if pos_count > neg_count:
+    # Classify sentiment based on polarity
+    if blob.sentiment.polarity > 0:
         return "Positive"
-    elif neg_count > pos_count:
+    elif blob.sentiment.polarity < 0:
         return "Negative"
     else:
         return "Neutral"
@@ -50,13 +42,13 @@ data = pd.DataFrame({
         "This is the best experience I have ever had.",
         "Amazing quality and very fast shipping.",
         "I had an amazing experience, very happy.",
-        "Really good product."
+        "Really good product.",
 
         # Negative reviews
         "I hate this product. Terrible experience.",
         "Disappointing product, very bad.",
-        "Not worth the price, bad performance."
-        
+        "Not worth the price, bad performance.",
+
         # Neutral reviews
         "The product arrived in a box with standard delivery.",
         "I used the product as expected and it works fine.",
@@ -66,7 +58,7 @@ data = pd.DataFrame({
     ]
 })
 
-# Analyze sentiments
+# Analyze sentiment
 data["sentiment"] = data["review"].apply(analyze_sentiment)
 
 # Map sentiment categories to numerical values for visualization
@@ -81,10 +73,4 @@ sns.countplot(x="sentiment", data=data, hue="sentiment", palette="viridis", lege
 plt.title("Sentiment Distribution")
 plt.xlabel("Sentiment")
 plt.ylabel("Count")
-plt.show()
-
-# Heatmap (visualizing sentiment matrix for insights)
-conf_matrix = pd.crosstab(data["sentiment"], data["sentiment"])
-sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
-plt.title("Sentiment Heatmap")
 plt.show()
